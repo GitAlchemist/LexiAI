@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+}
+/* LexiAI Executive Legal Advisory Styling */
+.markdown-content h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 6px;
+  margin-top: 20px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.markdown-content p {
+  color: #334155;
+  line-height: 1.7;
+  font-size: 0.93rem;
+  margin-bottom: 12px;
+}
+
+.markdown-content table {
+  width: 100%;
+  margin: 16px 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+}
+
+.markdown-content th {
+  background-color: #1e293b;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.markdown-content td {
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.markdown-content tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.markdown-content ul, .markdown-content ol {
+  padding-left: 20px;
+  margin-bottom: 16px;
+}
+
+.markdown-content li {
+  color: #334155;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.markdown-content strong {
+  color: #0f172a;
+  font-weight: 600;
+}

@@ -1,0 +1,16 @@
+# Ignore dependency folders (Render and Vercel build these automatically)
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Ignore sensitive environment variables & API keys
+.env
+server/.env
+
+# Ignore build output folders
+dist/
+client/dist/
+
+# Ignore operating system junk files
+.DS_Store
+Thumbs.db
