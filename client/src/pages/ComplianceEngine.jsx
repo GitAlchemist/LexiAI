@@ -82,7 +82,7 @@ export default function ComplianceEngine() {
     setAiLoading(true);
     setAiResult('');
     try {
-      const res = await fetch('http://localhost:5000/api/ai/generate-clause', {
+      const res = await fetch('https://lexiai-backend.onrender.com/api/ai/generate-clause', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

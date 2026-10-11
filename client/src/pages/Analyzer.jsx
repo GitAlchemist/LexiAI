@@ -16,7 +16,7 @@ export default function Analyzer() {
     formData.append('document', file);
 
     try {
-      const res = await fetch('http://localhost:5000/api/ai/analyze-contract', {
+      const res = await fetch('https://lexiai-backend.onrender.com/api/ai/analyze-contract', {
         method: 'POST',
         body: formData,
       });
@@ -70,7 +70,7 @@ export default function Analyzer() {
             <div>
               <span className="text-muted small fw-bold text-uppercase d-block mb-1">AI Engine Status</span>
               <h3 className="fw-bold text-success m-0"><i className="fa-solid fa-circle text-success fs-6 me-2"></i>Active</h3>
-              <small className="text-muted">Gemini 3.8 Flash Engine</small>
+              <small className="text-muted">3.8 Flash Engine</small>
             </div>
             <div className="p-3 bg-success bg-opacity-10 rounded-circle text-success">
               <i className="fa-solid fa-microchip fs-3"></i>
