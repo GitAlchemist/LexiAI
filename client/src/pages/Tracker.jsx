@@ -13,7 +13,7 @@ export default function Tracker() {
 
   const fetchComplaints = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/tracker/all');
+      const res = await fetch(`${API_BASE}/api/tracker/all`);
       const data = await res.json();
       setComplaints(data);
     } catch (err) {
