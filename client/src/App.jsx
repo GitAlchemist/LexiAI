@@ -9,7 +9,6 @@ import ComplianceEngine from './pages/ComplianceEngine';
 import Tracker from './pages/Tracker';
 import AuthPage from './pages/AuthPage';
 import Sidebar from './components/Sidebar';
-import Home from './pages/Landing'; // adjust to match your actual filename
 
 function AppRoutes() {
   const { user } = useContext(AuthContext);
