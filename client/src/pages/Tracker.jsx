@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://lexiai-backend.onrender.com';
+
 export default function Tracker() {
   const [complaints, setComplaints] = useState([]);
   const [category, setCategory] = useState('Contract & Document Analysis');
@@ -27,7 +29,7 @@ export default function Tracker() {
 
     setLoading(true);
     try {
-      const res = await fetch('https://lexiai-backend.onrender.com/api/tracker/submit', {
+      const res = await fetch(`${API_BASE}/api/tracker/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category, description, priority }),
