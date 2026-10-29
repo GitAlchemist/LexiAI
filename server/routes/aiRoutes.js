@@ -52,7 +52,7 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
           content: `Analyze this document:\n\n${documentText.slice(0, 12000)}`
         }
       ],
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama3-70b-8192',
     });
 
     const analysis = completion.choices[0]?.message?.content || 'Analysis completed.';
