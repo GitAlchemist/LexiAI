@@ -40,7 +40,7 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
       return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
     }
 
-    // Query Groq API
+    // Query Groq API with universally available model
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -52,7 +52,7 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
           content: `Analyze this document:\n\n${documentText.slice(0, 12000)}`
         }
       ],
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       response_format: { type: "json_object" }
     });
 
@@ -69,4 +69,5 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
     });
   }
 });
+
 module.exports = router;
