@@ -126,3 +126,5 @@ router.post('/chat', async (req, res) => {
     return res.status(500).json({ error: 'Failed to generate chat response', details: err.message });
   }
 });
+
+module.exports = router;

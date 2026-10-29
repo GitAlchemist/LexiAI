@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
+const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/ai', aiRoutes);
 app.use('/api/tracker', trackerRoutes);
 
