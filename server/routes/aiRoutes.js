@@ -126,5 +126,42 @@ router.post('/chat', async (req, res) => {
     return res.status(500).json({ error: 'Failed to generate chat response', details: err.message });
   }
 });
+// AI Clause Generator Route
+router.post('/generate-clause', async (req, res) => {
+  try {
+    const { clauseType, customRequirements } = req.body || {};
+
+    if (!customRequirements || !customRequirements.trim()) {
+      return res.status(400).json({ error: 'Requirements are required to generate a clause.' });
+    }
+
+    if (!groq) {
+      return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
+    }
+
+    const systemPrompt = `You are LexiAI, a specialized legal drafting expert. Generate a professional, legally binding ${clauseType || 'legal'} clause based on the user's requirements. Return ONLY the drafted clause text cleanly formatted.`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Clause Type: ${clauseType}\nRequirements: ${customRequirements}` }
+      ],
+      model: 'llama-3.1-8b-instant'
+    });
+
+    const resultText = completion.choices[0]?.message?.content || 'Failed to generate clause draft.';
+
+    return res.json({ 
+      success: true,
+      result: resultText,
+      clause: resultText,
+      analysis: resultText
+    });
+
+  } catch (err) {
+    console.error('Clause Generator Route Error:', err);
+    return res.status(500).json({ error: 'Failed to generate clause draft', details: err.message });
+  }
+});
 
 module.exports = router;
