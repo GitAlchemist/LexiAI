@@ -73,48 +73,53 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
   }
 });
 
-// AI Chat Legal Assistant Route (Fixes the 404 error)
+// AI Chat Legal Assistant Route
 router.post('/chat', async (req, res) => {
   try {
-    const { prompt, scope, message } = req.body;
-    const userMessage = prompt || message || '';
+    const { prompt, scope, message, query, userMessage, text } = req.body;
+    const finalPrompt = query || prompt || message || userMessage || text || '';
 
-    if (!userMessage) {
-      return res.status(400).json({ error: 'Message or prompt is required.' });
+    if (!finalPrompt || !finalPrompt.trim()) {
+      return res.status(400).json({ error: 'Message or query text is required.' });
     }
 
     if (!groq) {
       return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
     }
 
-    let completion;
-    const systemPrompt = `You are LexiAI, a expert legal consultant specializing in ${scope || 'general legal inquiries'}. Provide clear, accurate legal guidance.`;
+    const systemPrompt = `You are LexiAI, an expert legal consultant specializing in ${scope || 'general legal inquiries'}. Provide clear, accurate legal guidance.`;
 
+    let completion;
     try {
       completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
+          { role: 'user', content: finalPrompt }
         ],
-        model: 'openai/gpt-oss-120b'
+        model: 'llama-3.1-8b-instant'
       });
-    } catch (err) {
+    } catch (modelErr) {
       completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
+          { role: 'user', content: finalPrompt }
         ],
-        model: 'openai/gpt-oss-20b'
+        model: 'llama3-8b-8192'
       });
     }
 
     const reply = completion.choices[0]?.message?.content || 'No response generated.';
-    return res.json({ reply, response: reply, result: reply });
+
+    // Return all common property keys so frontend component parses the response cleanly
+    return res.json({ 
+      reply: reply, 
+      response: reply, 
+      result: reply,
+      answer: reply
+    });
 
   } catch (err) {
     console.error('Chat Route Error:', err);
     return res.status(500).json({ error: 'Failed to generate chat response', details: err.message });
   }
 });
-
-module.exports = router;
