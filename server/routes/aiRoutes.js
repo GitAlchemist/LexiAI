@@ -4,22 +4,18 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const Groq = require('groq-sdk');
 
-// Configure multer for memory buffer storage
 const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// Initialize Groq SDK safely
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
-// Document Analyzer Route
 router.post('/analyze-contract', upload.single('file'), async (req, res) => {
   try {
     let documentText = '';
 
-    // Handle PDF file buffer or raw text body
     if (req.file) {
       if (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
         const parsedPdf = await pdfParse(req.file.buffer);
@@ -35,12 +31,10 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No readable text extracted from document' });
     }
 
-    // Fallback if GROQ_API_KEY is not available
     if (!groq) {
       return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
     }
 
-    // Query Groq API with universally available model
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -52,7 +46,7 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
           content: `Analyze this document:\n\n${documentText.slice(0, 12000)}`
         }
       ],
-      model: 'llama-3.1-8b-instant',
+      model: 'llama3-8b-8192',
       response_format: { type: "json_object" }
     });
 
