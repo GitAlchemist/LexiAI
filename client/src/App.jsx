@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, AuthProvider } from './context/AuthContext';
 
-import Home from './pages/Home';
+import Home from './pages/home';
 import Assistant from './pages/Assistant';
 import Analyzer from './pages/Analyzer';
 import ComplianceEngine from './pages/ComplianceEngine';

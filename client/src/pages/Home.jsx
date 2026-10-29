@@ -1,124 +1,134 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-/* ------------------------------------------------------------------
-   LEGAL BACKGROUND IMAGE (transparent watermark behind the page)
-   - Default: built-in SVG courthouse + scales (no download needed).
-   - To use a real photo instead: put it at  public/legal-bg.jpg
-     and set  USE_PHOTO = true  below.
-------------------------------------------------------------------- */
-const USE_PHOTO = false;
-const PHOTO_URL = '/legal-bg.jpg';
-
-const courthouseSvg = `
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800' fill='none' stroke='#60a5fa' stroke-width='3' stroke-linejoin='round'>
-  <path d='M200 260 L600 90 L1000 260 Z'/>
-  <path d='M240 250 L600 110 L960 250'/>
-  <circle cx='600' cy='190' r='26'/>
-  <rect x='200' y='260' width='800' height='34'/>
-  <rect x='180' y='294' width='840' height='20'/>
+/* ------------------------------------------------------------------ */
+/*  Legal background art (inline SVG, no image file needed).           */
+/*  A court building: pediment, columns and steps, drawn in line art.  */
+/*  To use your own photo instead, set COURT_BG = "url('/legal-bg.jpg')" */
+/*  and put legal-bg.jpg inside your /public folder.                   */
+/* ------------------------------------------------------------------ */
+const courtSvg = `
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520' fill='none' stroke='white' stroke-width='3' stroke-linejoin='round'>
+  <polygon points='60,170 400,40 740,170'/>
+  <polygon points='140,160 400,62 660,160' stroke-width='1.5'/>
+  <circle cx='400' cy='118' r='22' stroke-width='2'/>
+  <rect x='60' y='170' width='680' height='28'/>
+  <rect x='80' y='198' width='640' height='16' stroke-width='2'/>
   <g>
-    <rect x='230' y='314' width='60' height='320'/><rect x='215' y='634' width='90' height='22'/>
-    <rect x='380' y='314' width='60' height='320'/><rect x='365' y='634' width='90' height='22'/>
-    <rect x='530' y='314' width='60' height='320'/><rect x='515' y='634' width='90' height='22'/>
-    <rect x='680' y='314' width='60' height='320'/><rect x='665' y='634' width='90' height='22'/>
-    <rect x='830' y='314' width='60' height='320'/><rect x='815' y='634' width='90' height='22'/>
+    <rect x='110' y='214' width='44' height='230'/><rect x='100' y='214' width='64' height='14'/><rect x='100' y='432' width='64' height='14'/>
+    <rect x='214' y='214' width='44' height='230'/><rect x='204' y='214' width='64' height='14'/><rect x='204' y='432' width='64' height='14'/>
+    <rect x='318' y='214' width='44' height='230'/><rect x='308' y='214' width='64' height='14'/><rect x='308' y='432' width='64' height='14'/>
+    <rect x='438' y='214' width='44' height='230'/><rect x='428' y='214' width='64' height='14'/><rect x='428' y='432' width='64' height='14'/>
+    <rect x='542' y='214' width='44' height='230'/><rect x='532' y='214' width='64' height='14'/><rect x='532' y='432' width='64' height='14'/>
+    <rect x='646' y='214' width='44' height='230'/><rect x='636' y='214' width='64' height='14'/><rect x='636' y='432' width='64' height='14'/>
   </g>
-  <rect x='170' y='656' width='860' height='24'/>
-  <rect x='140' y='680' width='920' height='24'/>
-  <rect x='110' y='704' width='980' height='24'/>
-  <g transform='translate(600 470)'>
-    <line x1='0' y1='-90' x2='0' y2='90'/>
-    <line x1='-120' y1='-60' x2='120' y2='-60'/>
-    <path d='M-120 -60 L-155 10 L-85 10 Z'/><path d='M120 -60 L85 10 L155 10 Z'/>
-    <path d='M-160 10 Q-120 40 -80 10'/><path d='M80 10 Q120 40 160 10'/>
-    <rect x='-35' y='90' width='70' height='14'/>
-  </g>
+  <rect x='80' y='446' width='640' height='18'/>
+  <rect x='60' y='464' width='680' height='18'/>
+  <rect x='40' y='482' width='720' height='18'/>
 </svg>`;
 
-const BG_IMAGE = USE_PHOTO
-  ? `url(${PHOTO_URL})`
-  : `url("data:image/svg+xml,${encodeURIComponent(courthouseSvg)}")`;
+const COURT_BG = `url("data:image/svg+xml;utf8,${encodeURIComponent(courtSvg)}")`;
 
-/* ------------------------------------------------------------------
-   Sample data (replace with real API data later)
-------------------------------------------------------------------- */
-const keyActs = [
-  { name: 'Indian Contract Act, 1872', tag: 'Corporate' },
-  { name: 'Digital Personal Data Protection Act, 2023', tag: 'Privacy' },
-  { name: 'Consumer Protection Act, 2019', tag: 'Consumer' },
-  { name: 'Code on Wages, 2019', tag: 'Labor' },
-  { name: 'Hindu Succession Act, 1956', tag: 'Personal' },
+/* Latin legal maxims: one is shown per day */
+const MAXIMS = [
+  { latin: 'Audi alteram partem', meaning: 'Hear the other side. No one should be condemned unheard.' },
+  { latin: 'Pacta sunt servanda', meaning: 'Agreements must be kept. The foundation of contract law.' },
+  { latin: 'Ubi jus ibi remedium', meaning: 'Where there is a right, there is a remedy.' },
+  { latin: 'Nemo judex in causa sua', meaning: 'No one should be a judge in their own cause.' },
+  { latin: 'Ignorantia juris non excusat', meaning: 'Ignorance of the law is not an excuse.' },
+  { latin: 'Actus non facit reum nisi mens sit rea', meaning: 'An act alone does not make a person guilty without a guilty mind.' },
+  { latin: 'Caveat emptor', meaning: 'Let the buyer beware. Review before you commit.' },
 ];
 
-const recentMatters = [
-  { title: 'Vendor Service Agreement', type: 'Contract Audit', risk: 'High', score: 78, date: 'Today' },
-  { title: 'Employment Offer – Senior Developer', type: 'Contract Audit', risk: 'Low', score: 24, date: 'Yesterday' },
-  { title: 'Startup Shareholder Agreement', type: 'Contract Audit', risk: 'Medium', score: 52, date: '2 days ago' },
-  { title: 'Rental Lease – Commercial Unit', type: 'Contract Audit', risk: 'Medium', score: 46, date: '4 days ago' },
+/* Practice areas (matches the 5 statutory frameworks) */
+const PRACTICE_AREAS = [
+  { icon: 'fa-people-roof', label: 'Personal & Family', note: 'Succession, marriage, property' },
+  { icon: 'fa-helmet-safety', label: 'Labour & Employment', note: 'Contracts, disputes, termination' },
+  { icon: 'fa-building-columns', label: 'Corporate & Startup', note: 'Liability, shareholders, IP' },
+  { icon: 'fa-user-lock', label: 'Data Privacy', note: 'DPDP Act, consent, breach' },
+  { icon: 'fa-cart-shopping', label: 'Consumer Protection', note: 'Rights, refunds, complaints' },
 ];
 
-const riskBadge = { High: 'bg-danger', Medium: 'bg-warning text-dark', Low: 'bg-success' };
-const riskBar = { High: 'bg-danger', Medium: 'bg-warning', Low: 'bg-success' };
+/* SAMPLE data: replace with real data from your API later */
+const DEADLINES = [
+  { title: 'Vendor Agreement: review pending', due: 'Due in 2 days', level: 'danger' },
+  { title: 'Employment contract: clause check', due: 'Due in 5 days', level: 'warning' },
+  { title: 'NDA renewal: signature stage', due: 'Due in 9 days', level: 'primary' },
+];
 
-const glass = { background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(4px)' };
+const RECENT = [
+  { icon: 'fa-file-contract', text: 'Lease Agreement analysed', meta: 'Risk score 72 / 100', color: 'primary' },
+  { icon: 'fa-robot', text: 'Asked: notice period rules', meta: 'Labour Law', color: 'success' },
+  { icon: 'fa-shield-halved', text: 'Indemnity clause template opened', meta: 'Compliance Engine', color: 'warning' },
+];
 
 export default function Home() {
   const { user } = useContext(AuthContext);
 
-  const today = new Date().toLocaleDateString('en-IN', {
+  const today = useMemo(() => new Date(), []);
+  const dateLabel = today.toLocaleDateString('en-IN', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
+  const maxim = MAXIMS[dayOfYear % MAXIMS.length];
 
   return (
-    <div className="position-relative" style={{ minHeight: '100vh', overflow: 'hidden' }}>
-      {/* Transparent legal image behind the whole page */}
+    <div className="container-fluid p-4 position-relative" style={{ minHeight: '100%', overflow: 'hidden' }}>
+      {/* Small hover/legal-accent styles (theme colours unchanged) */}
+      <style>{`
+        .lexi-card { transition: transform .2s ease, box-shadow .2s ease; }
+        .lexi-card:hover { transform: translateY(-3px); box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.25) !important; }
+        .lexi-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,193,7,.6), transparent); }
+        .lexi-top-accent { border-top: 3px solid var(--accent, #0d6efd) !important; }
+      `}</style>
+
+      {/* Page watermark: translucent court building behind everything */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: BG_IMAGE,
+          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
+          backgroundImage: COURT_BG,
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center 140px',
-          backgroundSize: 'min(1200px, 100%) auto',
-          opacity: USE_PHOTO ? 0.12 : 0.14,
-          pointerEvents: 'none',
-          zIndex: 0,
+          backgroundPosition: 'center 62%',
+          backgroundSize: 'min(1100px, 95%)',
+          opacity: 0.07,
         }}
       />
 
-      <div className="container-fluid p-4 position-relative" style={{ zIndex: 1 }}>
-        {/* ---------- Welcome Hero Banner ---------- */}
+      <div className="position-relative" style={{ zIndex: 1 }}>
+        {/* ---------------- Welcome Hero Banner ---------------- */}
         <div
           className="card border-0 text-white rounded-4 p-4 p-md-5 mb-4 shadow-sm"
           style={{
-            background: 'linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,41,59,0.92) 100%)',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
             position: 'relative',
             overflow: 'hidden',
           }}
         >
-          <i
-            className="fa-solid fa-scale-balanced"
+          {/* Hero watermark */}
+          <div
             aria-hidden="true"
             style={{
-              position: 'absolute', right: '-30px', bottom: '-50px',
-              fontSize: '18rem', color: '#3b82f6', opacity: 0.06, transform: 'rotate(-8deg)',
+              position: 'absolute', right: '-40px', bottom: '-30px', width: '520px', height: '340px',
+              backgroundImage: COURT_BG, backgroundRepeat: 'no-repeat', backgroundSize: 'contain',
+              opacity: 0.1, pointerEvents: 'none',
             }}
-          ></i>
-
+          />
           <div className="row align-items-center position-relative">
             <div className="col-lg-8">
-              <span className="badge bg-primary text-white px-3 py-2 rounded-pill mb-3">
-                <i className="fa-solid fa-gavel me-2"></i>Legal Intelligence Operating System
-              </span>
+              <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span className="badge bg-primary text-white px-3 py-2 rounded-pill">
+                  <i className="fa-solid fa-sparkles me-2"></i>Legal Intelligence Operating System
+                </span>
+                <span className="badge border border-warning border-opacity-50 text-warning px-3 py-2 rounded-pill">
+                  <i className="fa-solid fa-gavel me-2"></i>{dateLabel}
+                </span>
+              </div>
               <h1 className="fw-bold display-6 mb-2">
                 Welcome back, Counsel <span className="text-primary">{user?.email?.split('@')[0]}</span>
               </h1>
-              <p className="text-primary fst-italic small mb-3">
-                <i className="fa-solid fa-landmark me-2"></i>“Fiat justitia” — let justice be done
-              </p>
+              <div className="lexi-rule my-3" style={{ maxWidth: 420 }}></div>
               <p className="text-light opacity-75 fs-6 lh-lg mb-4">
                 LexiAI equips your practice with real-time contract vulnerability scoring, multi-category statutory legal advisories, and an interactive compliance repository.
               </p>
@@ -129,14 +139,11 @@ export default function Home() {
                 <Link to="/assistant" className="btn btn-outline-light px-4 py-2.5 fw-bold">
                   <i className="fa-solid fa-robot me-2"></i>Ask Legal AI
                 </Link>
-                <Link to="/tracker" className="btn btn-outline-light px-4 py-2.5 fw-bold">
-                  <i className="fa-solid fa-list-check me-2"></i>Track Complaint
-                </Link>
               </div>
-              <div className="d-flex flex-wrap gap-4 small text-light opacity-75">
-                <span><i className="fa-regular fa-calendar me-2 text-primary"></i>{today}</span>
-                <span><i className="fa-solid fa-lock me-2 text-primary"></i>Confidential &amp; encrypted workspace</span>
-                <span><i className="fa-solid fa-user-shield me-2 text-primary"></i>Privilege-safe handling</span>
+              <div className="small text-light opacity-75">
+                <i className="fa-solid fa-quote-left text-warning me-2"></i>
+                <span className="fst-italic fw-semibold text-white">{maxim.latin}</span>
+                <span className="mx-2">|</span>{maxim.meaning}
               </div>
             </div>
             <div className="col-lg-4 text-center d-none d-lg-block">
@@ -147,26 +154,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ---------- Key statutes strip ---------- */}
-        <div
-          className="rounded-3 px-3 py-2 mb-4 d-flex align-items-center gap-4 overflow-auto"
-          style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(96,165,250,0.25)' }}
-        >
-          <span className="badge bg-warning text-dark flex-shrink-0">
-            <i className="fa-solid fa-book-bookmark me-1"></i>Key Statutes
-          </span>
-          {keyActs.map((a) => (
-            <span key={a.name} className="text-light small text-nowrap opacity-75">
-              <i className="fa-solid fa-gavel text-primary me-2"></i>
-              {a.name} <span className="text-primary">({a.tag})</span>
-            </span>
-          ))}
-        </div>
-
-        {/* ---------- Metric Cards Row ---------- */}
+        {/* ---------------- Metric Cards Row (kept centred) ---------------- */}
         <div className="row g-3 mb-4">
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm p-4 rounded-3 h-100 border-start border-primary border-4" style={glass}>
+            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#0d6efd' }}>
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Contract Risk Gauge</span>
                 <i className="fa-solid fa-shield-halved text-primary fs-4"></i>
@@ -177,18 +168,18 @@ export default function Home() {
           </div>
 
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm p-4 rounded-3 h-100 border-start border-success border-4" style={glass}>
+            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#198754' }}>
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Statutory Categories</span>
                 <i className="fa-solid fa-layer-group text-success fs-4"></i>
               </div>
               <h3 className="fw-bold text-dark my-1">5 Frameworks</h3>
-              <small className="text-muted">Personal, Labor, Corporate, Privacy &amp; Consumer</small>
+              <small className="text-muted">Personal, Labor, Corporate, Privacy & Consumer</small>
             </div>
           </div>
 
           <div className="col-md-4">
-            <div className="card border-0 shadow-sm p-4 rounded-3 h-100 border-start border-warning border-4" style={glass}>
+            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#ffc107' }}>
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Active Jurisdiction</span>
                 <i className="fa-solid fa-location-dot text-warning fs-4"></i>
@@ -199,131 +190,149 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ---------- Direct Module Cards ---------- */}
-        <div className="row g-4 mb-4">
-          {[
-            {
-              icon: 'fa-file-contract', color: 'primary', title: 'Contract Analyzer', to: '/analyzer',
-              btn: 'Open Analyzer', btnClass: 'btn-outline-primary',
-              text: 'Upload PDF or TXT legal agreements to extract summaries, calculate risk scores, and highlight missing clauses.',
-            },
-            {
-              icon: 'fa-robot', color: 'success', title: 'AI Legal Assistant', to: '/assistant',
-              btn: 'Open Assistant', btnClass: 'btn-outline-success',
-              text: 'Ask legal questions across civil succession, employment disputes, startup liabilities, and data protection rules.',
-            },
-            {
-              icon: 'fa-shield-halved', color: 'warning', title: 'Compliance Engine', to: '/compliance',
-              btn: 'Open Compliance', btnClass: 'btn-outline-warning text-dark',
-              text: 'Explore mandatory statutory clause templates, indemnification standards, and governing law repositories.',
-            },
-          ].map((m) => (
-            <div className="col-md-4" key={m.title}>
-              <div className="card border-0 shadow-sm p-4 rounded-4 h-100 d-flex flex-column justify-content-between" style={glass}>
-                <div>
-                  <div className={`bg-${m.color} bg-opacity-10 text-${m.color} p-3 rounded-3 d-inline-block mb-3`}>
-                    <i className={`fa-solid ${m.icon} fs-3`}></i>
-                  </div>
-                  <h5 className="fw-bold text-dark">{m.title}</h5>
-                  <p className="text-muted small lh-base">{m.text}</p>
-                </div>
-                <Link to={m.to} className={`btn ${m.btnClass} w-100 fw-bold mt-3`}>
-                  {m.btn} <i className="fa-solid fa-arrow-right ms-2"></i>
-                </Link>
+        {/* ---------------- Practice Areas ---------------- */}
+        <div className="d-flex align-items-center gap-3 mb-3">
+          <h6 className="text-white fw-bold mb-0 text-uppercase">
+            <i className="fa-solid fa-landmark text-warning me-2"></i>Practice Areas
+          </h6>
+          <div className="lexi-rule flex-grow-1"></div>
+        </div>
+        <div className="row g-3 mb-4">
+          {PRACTICE_AREAS.map((a) => (
+            <div className="col-6 col-lg" key={a.label}>
+              <div className="card lexi-card border-0 shadow-sm bg-white rounded-3 h-100 p-3 text-center">
+                <i className={`fa-solid ${a.icon} text-primary fs-3 mb-2`}></i>
+                <div className="fw-bold text-dark small">{a.label}</div>
+                <div className="text-muted" style={{ fontSize: '0.75rem' }}>{a.note}</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* ---------- Recent Matters + Legal Toolkit ---------- */}
+        {/* ---------------- Direct Module Cards ---------------- */}
         <div className="row g-4 mb-4">
-          <div className="col-lg-8">
-            <div className="card border-0 shadow-sm rounded-4 h-100" style={glass}>
-              <div className="card-body p-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h5 className="fw-bold text-dark mb-0">
-                    <i className="fa-solid fa-folder-open text-primary me-2"></i>Recent Matters
-                  </h5>
-                  <Link to="/analyzer" className="small fw-bold text-decoration-none">New audit</Link>
+          <div className="col-md-6 col-xl-3">
+            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-3 d-inline-block mb-3">
+                  <i className="fa-solid fa-file-contract fs-3"></i>
                 </div>
-                <div className="table-responsive">
-                  <table className="table align-middle mb-0">
-                    <thead>
-                      <tr className="text-muted small text-uppercase">
-                        <th className="fw-bold border-0">Matter</th>
-                        <th className="fw-bold border-0">Risk</th>
-                        <th className="fw-bold border-0" style={{ minWidth: 140 }}>Score</th>
-                        <th className="fw-bold border-0">When</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentMatters.map((m) => (
-                        <tr key={m.title}>
-                          <td>
-                            <div className="fw-semibold text-dark">{m.title}</div>
-                            <small className="text-muted">{m.type}</small>
-                          </td>
-                          <td><span className={`badge ${riskBadge[m.risk]}`}>{m.risk}</span></td>
-                          <td>
-                            <div className="progress" style={{ height: 6 }}>
-                              <div className={`progress-bar ${riskBar[m.risk]}`} style={{ width: `${m.score}%` }}></div>
-                            </div>
-                            <small className="text-muted">{m.score}/100</small>
-                          </td>
-                          <td className="text-muted small">{m.date}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <h5 className="fw-bold text-dark">Contract Analyzer</h5>
+                <p className="text-muted small lh-base">
+                  Upload PDF or TXT legal agreements to extract summaries, calculate risk scores, and highlight missing clauses.
+                </p>
               </div>
+              <Link to="/analyzer" className="btn btn-outline-primary w-100 fw-bold mt-3">
+                Open Analyzer <i className="fa-solid fa-arrow-right ms-2"></i>
+              </Link>
             </div>
           </div>
 
-          <div className="col-lg-4">
-            <div className="card border-0 shadow-sm rounded-4 h-100" style={glass}>
-              <div className="card-body p-4">
-                <h5 className="fw-bold text-dark mb-3">
-                  <i className="fa-solid fa-briefcase text-warning me-2"></i>Legal Toolkit
-                </h5>
-                <div className="d-grid gap-2">
-                  {[
-                    { icon: 'fa-file-signature', label: 'Draft NDA / agreement', to: '/assistant' },
-                    { icon: 'fa-scale-unbalanced', label: 'Check clause fairness', to: '/analyzer' },
-                    { icon: 'fa-clock', label: 'Limitation period lookup', to: '/compliance' },
-                    { icon: 'fa-bullhorn', label: 'File a consumer complaint', to: '/tracker' },
-                    { icon: 'fa-user-lock', label: 'DPDP data-privacy check', to: '/compliance' },
-                  ].map((t) => (
-                    <Link
-                      key={t.label}
-                      to={t.to}
-                      className="d-flex align-items-center gap-3 p-2 rounded-3 text-decoration-none text-dark bg-light"
-                    >
-                      <span
-                        className="bg-primary bg-opacity-10 text-primary rounded-3 d-inline-flex align-items-center justify-content-center"
-                        style={{ width: 36, height: 36 }}
-                      >
-                        <i className={`fa-solid ${t.icon}`}></i>
-                      </span>
-                      <span className="small fw-semibold">{t.label}</span>
-                    </Link>
-                  ))}
+          <div className="col-md-6 col-xl-3">
+            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div className="bg-success bg-opacity-10 text-success p-3 rounded-3 d-inline-block mb-3">
+                  <i className="fa-solid fa-robot fs-3"></i>
                 </div>
+                <h5 className="fw-bold text-dark">AI Legal Assistant</h5>
+                <p className="text-muted small lh-base">
+                  Ask legal questions across civil succession, employment disputes, startup liabilities, and data protection rules.
+                </p>
               </div>
+              <Link to="/assistant" className="btn btn-outline-success w-100 fw-bold mt-3">
+                Open Assistant <i className="fa-solid fa-arrow-right ms-2"></i>
+              </Link>
+            </div>
+          </div>
+
+          <div className="col-md-6 col-xl-3">
+            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-3 d-inline-block mb-3">
+                  <i className="fa-solid fa-shield-halved fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-dark">Compliance Engine</h5>
+                <p className="text-muted small lh-base">
+                  Explore mandatory statutory clause templates, indemnification standards, and governing law repositories.
+                </p>
+              </div>
+              <Link to="/compliance" className="btn btn-outline-warning text-dark w-100 fw-bold mt-3">
+                Open Compliance <i className="fa-solid fa-arrow-right ms-2"></i>
+              </Link>
+            </div>
+          </div>
+
+          {/* New: Complaint Tracker (already in your sidebar). Change the route if yours differs */}
+          <div className="col-md-6 col-xl-3">
+            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div className="bg-danger bg-opacity-10 text-danger p-3 rounded-3 d-inline-block mb-3">
+                  <i className="fa-solid fa-list-check fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-dark">Complaint Tracker</h5>
+                <p className="text-muted small lh-base">
+                  File complaints, follow case status, and escalate to the right forum with a clear record of every step.
+                </p>
+              </div>
+              <Link to="/tracker" className="btn btn-outline-danger w-100 fw-bold mt-3">
+                Open Tracker <i className="fa-solid fa-arrow-right ms-2"></i>
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* ---------- Disclaimer ---------- */}
-        <div
-          className="rounded-3 p-3 text-light small opacity-75 d-flex align-items-start gap-3"
-          style={{ background: 'rgba(15,23,42,0.85)', border: '1px solid rgba(96,165,250,0.2)' }}
-        >
-          <i className="fa-solid fa-circle-info text-primary mt-1"></i>
-          <span>
-            LexiAI provides AI-assisted legal information for research and review. It is not a substitute for advice from a qualified advocate. Verify statutes and case law before relying on any output.
-          </span>
+        {/* ---------------- Case Desk: deadlines + recent activity ---------------- */}
+        <div className="row g-4 mb-4">
+          <div className="col-lg-7">
+            <div className="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h6 className="fw-bold text-dark mb-0">
+                  <i className="fa-solid fa-calendar-check text-primary me-2"></i>Deadlines & Reviews
+                </h6>
+                <span className="badge bg-light text-muted border">Sample data</span>
+              </div>
+              {DEADLINES.map((d) => (
+                <div key={d.title} className="d-flex align-items-center justify-content-between py-2 border-bottom">
+                  <div className="d-flex align-items-center gap-3">
+                    <span className={`bg-${d.level} rounded-circle d-inline-block`} style={{ width: 10, height: 10 }}></span>
+                    <span className="text-dark small fw-semibold">{d.title}</span>
+                  </div>
+                  <span className={`badge bg-${d.level} bg-opacity-10 text-${d.level === 'warning' ? 'dark' : d.level}`}>{d.due}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="col-lg-5">
+            <div className="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h6 className="fw-bold text-dark mb-0">
+                  <i className="fa-solid fa-clock-rotate-left text-success me-2"></i>Recent Activity
+                </h6>
+                <span className="badge bg-light text-muted border">Sample data</span>
+              </div>
+              {RECENT.map((r) => (
+                <div key={r.text} className="d-flex align-items-center gap-3 py-2 border-bottom">
+                  <div className={`bg-${r.color} bg-opacity-10 text-${r.color} rounded-3 d-flex align-items-center justify-content-center`} style={{ width: 38, height: 38 }}>
+                    <i className={`fa-solid ${r.icon}`}></i>
+                  </div>
+                  <div>
+                    <div className="text-dark small fw-semibold">{r.text}</div>
+                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>{r.meta}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* ---------------- Legal disclaimer footer ---------------- */}
+        <div className="lexi-rule mb-3"></div>
+        <p className="text-center text-light opacity-50 small mb-0">
+          <i className="fa-solid fa-scale-balanced me-2"></i>
+          LexiAI provides AI-assisted legal information and is not a substitute for advice from a qualified advocate.
+          All analyses should be verified before reliance.
+        </p>
       </div>
     </div>
   );
