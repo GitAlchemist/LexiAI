@@ -19,13 +19,30 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// FIX 2: normalize chat payload so the route always receives a "query" key
+app.use('/api/ai/chat', (req, res, next) => {
+  const b = req.body || {};
+  const known = ['query', 'prompt', 'message', 'userMessage', 'text'];
+  const hasKnown = known.some(k => typeof b[k] === 'string' && b[k].trim());
+  if (!hasKnown) {
+    const lastMsg = Array.isArray(b.messages) && b.messages.length
+      ? b.messages[b.messages.length - 1].content
+      : undefined;
+    const alt = b.question || b.input || b.content || b.msg || b.userQuery || b.q || lastMsg;
+    if (typeof alt === 'string' && alt.trim()) {
+      req.body = { ...b, query: alt };
+    }
+  }
+  next();
+});
+
 // Root health check route (prevents "Cannot GET /" errors in browser checks)
 app.get('/', (req, res) => {
   res.send('LexiAI Backend API is running successfully.');
 });
 
 // API Routes
-const aiRoutes = require('./routes/aiRoutes');
+// FIX 1: removed the duplicate "const aiRoutes = require('./routes/aiRoutes');" that was here
 app.use('/api/ai', aiRoutes);
 app.use('/api/tracker', trackerRoutes);
 
