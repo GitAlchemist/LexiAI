@@ -129,9 +129,13 @@ router.post('/chat', async (req, res) => {
 // AI Clause Generator Route
 router.post('/generate-clause', async (req, res) => {
   try {
-    const { clauseType, customRequirements } = req.body || {};
+    const b = req.body || {};
+    const clauseType = b.clauseType || b.type || b.clause || 'legal';
+    const requirements = String(
+      b.customRequirements || b.requirements || b.prompt || b.query || b.text || ''
+    );
 
-    if (!customRequirements || !customRequirements.trim()) {
+    if (!requirements.trim()) {
       return res.status(400).json({ error: 'Requirements are required to generate a clause.' });
     }
 
@@ -139,19 +143,23 @@ router.post('/generate-clause', async (req, res) => {
       return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
     }
 
-    const systemPrompt = `You are LexiAI, a specialized legal drafting expert. Generate a professional, legally binding ${clauseType || 'legal'} clause based on the user's requirements. Return ONLY the drafted clause text cleanly formatted.`;
+    const systemPrompt = `You are LexiAI, a specialized legal drafting expert. Draft a professional ${clauseType} clause based on the user's requirements. Return ONLY the drafted clause text, cleanly formatted, suitable for review by a qualified lawyer.`;
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Clause Type: ${clauseType}\nRequirements: ${requirements}` }
+    ];
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Clause Type: ${clauseType}\nRequirements: ${customRequirements}` }
-      ],
-      model: 'llama-3.1-8b-instant'
-    });
+    let completion;
+    try {
+      completion = await groq.chat.completions.create({ messages, model: 'openai/gpt-oss-120b' });
+    } catch (modelErr) {
+      console.warn('Clause model failed, trying fallback...', modelErr.message);
+      completion = await groq.chat.completions.create({ messages, model: 'openai/gpt-oss-20b' });
+    }
 
     const resultText = completion.choices[0]?.message?.content || 'Failed to generate clause draft.';
 
-    return res.json({ 
+    return res.json({
       success: true,
       result: resultText,
       clause: resultText,
@@ -163,5 +171,4 @@ router.post('/generate-clause', async (req, res) => {
     return res.status(500).json({ error: 'Failed to generate clause draft', details: err.message });
   }
 });
-
 module.exports = router;
