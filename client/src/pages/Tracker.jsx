@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://lexiai-backend.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://lexiai-aqpa.onrender.com';
 
 export default function Tracker() {
   const [complaints, setComplaints] = useState([]);

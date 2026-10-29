@@ -5,6 +5,8 @@ export default function Analyzer() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://lexiai-aqpa.onrender.com';
+
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) return alert('Please upload a contract document (.pdf or .txt)');
@@ -13,16 +15,24 @@ export default function Analyzer() {
     setResult(null);
 
     const formData = new FormData();
-    formData.append('document', file);
+    // Fixed: Field name changed to 'file' to match backend upload.single('file')
+    formData.append('file', file);
 
     try {
-      const res = await fetch('https://lexiai-backend.onrender.com/api/ai/analyze-contract', {
+      // Fixed: Properly concatenated URL string using API_BASE
+      const res = await fetch(`${API_BASE}/api/ai/analyze-contract`, {
         method: 'POST',
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+
       const data = await res.json();
       setResult(data);
     } catch (err) {
+      console.error('Upload error:', err);
       alert('Error parsing contract document');
     } finally {
       setLoading(false);

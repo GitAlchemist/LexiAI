@@ -12,6 +12,8 @@ export default function ComplianceEngine() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState('');
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://lexiai-aqpa.onrender.com';
+
   const clauses = [
     {
       id: 'termination',
@@ -82,7 +84,8 @@ export default function ComplianceEngine() {
     setAiLoading(true);
     setAiResult('');
     try {
-      const res = await fetch('https://lexiai-backend.onrender.com/api/ai/generate-clause', {
+      // Fixed: Properly concatenated URL string using API_BASE and added route path
+      const res = await fetch(`${API_BASE}/api/ai/generate-clause`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +94,7 @@ export default function ComplianceEngine() {
         }),
       });
       const data = await res.json();
-      setAiResult(data.result);
+      setAiResult(data.result || data.analysis || data.clause);
     } catch (err) {
       alert('Failed to connect to backend AI generator');
     } finally {
