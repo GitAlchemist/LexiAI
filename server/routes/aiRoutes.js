@@ -32,23 +32,33 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
     }
 
     if (!groq) {
-      return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
+      return res.status(500).json({ error: 'Groq API Key is missing on Render.' });
     }
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert legal document auditor. Analyze the contract text and return ONLY a valid JSON object without markdown formatting in this exact format: {"riskScore": 65, "summary": "Contract analysis summary", "identifiedRisks": [{"type": "Uncapped Liability", "severity": "HIGH", "description": "Details of the risk"}]}'
-        },
-        {
-          role: 'user',
-          content: `Analyze this document:\n\n${documentText.slice(0, 12000)}`
-        }
-      ],
-      model: 'llama3-8b-8192',
-      response_format: { type: "json_object" }
-    });
+    // Try primary active Groq model, fallback if needed
+    let completion;
+    const systemPrompt = 'You are an expert legal document auditor. Analyze the contract text and return ONLY a valid JSON object in this format: {"riskScore": 65, "summary": "Summary text", "identifiedRisks": [{"type": "Uncapped Liability", "severity": "HIGH", "description": "Details"}]}';
+
+    try {
+      completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Analyze this document:\n\n${documentText.slice(0, 10000)}` }
+        ],
+        model: 'openai/gpt-oss-120b',
+        response_format: { type: "json_object" }
+      });
+    } catch (modelErr) {
+      console.warn("Primary model failed, attempting fallback model...", modelErr.message);
+      completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Analyze this document:\n\n${documentText.slice(0, 10000)}` }
+        ],
+        model: 'openai/gpt-oss-20b',
+        response_format: { type: "json_object" }
+      });
+    }
 
     const rawContent = completion.choices[0]?.message?.content || '{}';
     const parsedData = JSON.parse(rawContent);
