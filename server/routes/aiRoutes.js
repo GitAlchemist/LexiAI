@@ -76,7 +76,7 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
 // AI Chat Legal Assistant Route
 router.post('/chat', async (req, res) => {
   try {
-    const { prompt, scope, message, query, userMessage, text } = req.body;
+    const { prompt, scope, message, query, userMessage, text } = req.body || {};
     const finalPrompt = query || prompt || message || userMessage || text || '';
 
     if (!finalPrompt || !finalPrompt.trim()) {
@@ -89,6 +89,7 @@ router.post('/chat', async (req, res) => {
 
     const systemPrompt = `You are LexiAI, an expert legal consultant specializing in ${scope || 'general legal inquiries'}. Provide clear, accurate legal guidance.`;
 
+    // Try primary active Groq model, fallback if model error occurs
     let completion;
     try {
       completion = await groq.chat.completions.create({
@@ -96,26 +97,28 @@ router.post('/chat', async (req, res) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: finalPrompt }
         ],
-        model: 'llama-3.1-8b-instant'
+        model: 'openai/gpt-oss-120b'
       });
     } catch (modelErr) {
+      console.warn("Primary chat model failed, trying fallback...", modelErr.message);
       completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: finalPrompt }
         ],
-        model: 'llama3-8b-8192'
+        model: 'openai/gpt-oss-20b'
       });
     }
 
     const reply = completion.choices[0]?.message?.content || 'No response generated.';
 
-    // Return all common property keys so frontend component parses the response cleanly
+    // Return under all common keys so frontend parses it seamlessly
     return res.json({ 
       reply: reply, 
       response: reply, 
       result: reply,
-      answer: reply
+      answer: reply,
+      message: reply
     });
 
   } catch (err) {
