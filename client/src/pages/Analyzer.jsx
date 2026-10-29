@@ -15,11 +15,9 @@ export default function Analyzer() {
     setResult(null);
 
     const formData = new FormData();
-    // Fixed: Field name changed to 'file' to match backend upload.single('file')
     formData.append('file', file);
 
     try {
-      // Fixed: Properly concatenated URL string using API_BASE
       const res = await fetch(`${API_BASE}/api/ai/analyze-contract`, {
         method: 'POST',
         body: formData,
@@ -30,7 +28,18 @@ export default function Analyzer() {
       }
 
       const data = await res.json();
-      setResult(data);
+
+      // Fix: Safely parse response if returned as raw string or wrapped JSON
+      let parsed = data;
+      if (typeof data.analysis === 'string') {
+        const cleanJson = data.analysis.replace(/```json|```/g, '').trim();
+        parsed = JSON.parse(cleanJson);
+      } else if (typeof data === 'string') {
+        const cleanJson = data.replace(/```json|```/g, '').trim();
+        parsed = JSON.parse(cleanJson);
+      }
+
+      setResult(parsed);
     } catch (err) {
       console.error('Upload error:', err);
       alert('Error parsing contract document');
