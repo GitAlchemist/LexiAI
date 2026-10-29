@@ -12,6 +12,7 @@ const upload = multer({
 
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
+// Document Analyzer Route
 router.post('/analyze-contract', upload.single('file'), async (req, res) => {
   try {
     let documentText = '';
@@ -35,7 +36,6 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
       return res.status(500).json({ error: 'Groq API Key is missing on Render.' });
     }
 
-    // Try primary active Groq model, fallback if needed
     let completion;
     const systemPrompt = 'You are an expert legal document auditor. Analyze the contract text and return ONLY a valid JSON object in this format: {"riskScore": 65, "summary": "Summary text", "identifiedRisks": [{"type": "Uncapped Liability", "severity": "HIGH", "description": "Details"}]}';
 
@@ -49,7 +49,6 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
         response_format: { type: "json_object" }
       });
     } catch (modelErr) {
-      console.warn("Primary model failed, attempting fallback model...", modelErr.message);
       completion = await groq.chat.completions.create({
         messages: [
           { role: 'system', content: systemPrompt },
@@ -71,6 +70,50 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
       error: 'Failed to parse document', 
       details: err.message 
     });
+  }
+});
+
+// AI Chat Legal Assistant Route (Fixes the 404 error)
+router.post('/chat', async (req, res) => {
+  try {
+    const { prompt, scope, message } = req.body;
+    const userMessage = prompt || message || '';
+
+    if (!userMessage) {
+      return res.status(400).json({ error: 'Message or prompt is required.' });
+    }
+
+    if (!groq) {
+      return res.status(500).json({ error: 'Groq API Key is not configured on Render server.' });
+    }
+
+    let completion;
+    const systemPrompt = `You are LexiAI, a expert legal consultant specializing in ${scope || 'general legal inquiries'}. Provide clear, accurate legal guidance.`;
+
+    try {
+      completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        model: 'openai/gpt-oss-120b'
+      });
+    } catch (err) {
+      completion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        model: 'openai/gpt-oss-20b'
+      });
+    }
+
+    const reply = completion.choices[0]?.message?.content || 'No response generated.';
+    return res.json({ reply, response: reply, result: reply });
+
+  } catch (err) {
+    console.error('Chat Route Error:', err);
+    return res.status(500).json({ error: 'Failed to generate chat response', details: err.message });
   }
 });
 
