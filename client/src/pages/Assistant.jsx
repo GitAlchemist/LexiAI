@@ -181,9 +181,9 @@ export default function Assistant() {
             <p className="text-white-50 mb-0">Ask about civil, labor, company, privacy, and consumer law in plain English, Tamil, or Hindi.</p>
           </div>
           <div className="d-flex gap-4 text-center">
-            <div><div className="fs-3 fw-bold">{CATEGORIES.length}</div><small className="text-white-50">Legal domains</small></div>
-            <div><div className="fs-3 fw-bold">3</div><small className="text-white-50">Languages</small></div>
-            <div><div className="fs-3 fw-bold">{messages.filter(m => m.sender === 'user').length}</div><small className="text-white-50">Questions asked</small></div>
+            <div><div className="fs-3 fw-bold text-white">{CATEGORIES.length}</div><small className="text-white-50">Legal domains</small></div>
+            <div><div className="fs-3 fw-bold text-white">3</div><small className="text-white-50">Languages</small></div>
+            <div><div className="fs-3 fw-bold text-white">{messages.filter(m => m.sender === 'user').length}</div><small className="text-white-50">Questions asked</small></div>
           </div>
         </div>
       </div>
