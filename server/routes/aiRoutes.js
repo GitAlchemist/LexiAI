@@ -45,18 +45,21 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert legal document auditor. Analyze the contract text and return a JSON summary with riskScore, keyClauses, and summary.'
+          content: 'You are an expert legal document auditor. Analyze the contract text and return ONLY a valid JSON object without markdown formatting in this exact format: {"riskScore": 65, "summary": "Contract analysis summary", "identifiedRisks": [{"type": "Uncapped Liability", "severity": "HIGH", "description": "Details of the risk"}]}'
         },
         {
           role: 'user',
           content: `Analyze this document:\n\n${documentText.slice(0, 12000)}`
         }
       ],
-      model: 'llama3-70b-8192',
+      model: 'llama-3.3-70b-versatile',
+      response_format: { type: "json_object" }
     });
 
-    const analysis = completion.choices[0]?.message?.content || 'Analysis completed.';
-    return res.json({ success: true, analysis });
+    const rawContent = completion.choices[0]?.message?.content || '{}';
+    const parsedData = JSON.parse(rawContent);
+
+    return res.json(parsedData);
 
   } catch (err) {
     console.error('Analyzer Route Error:', err);
@@ -66,5 +69,4 @@ router.post('/analyze-contract', upload.single('file'), async (req, res) => {
     });
   }
 });
-
 module.exports = router;
