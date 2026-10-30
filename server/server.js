@@ -7,6 +7,9 @@ const authRoutes = require('./routes/authRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const trackerRoutes = require('./routes/trackerRoutes');
 
+const connectDB = require('./db'); // ADDED
+connectDB();                       // ADDED
+
 const app = express();
 
 // Enable CORS for Vercel deployment
