@@ -1,103 +1,105 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
-/* ------------------------------------------------------------------ */
-/*  Legal background art (inline SVG, no image file needed).           */
-/*  A court building: pediment, columns and steps, drawn in line art.  */
-/*  To use your own photo instead, set COURT_BG = "url('/legal-bg.jpg')" */
-/*  and put legal-bg.jpg inside your /public folder.                   */
-/* ------------------------------------------------------------------ */
-const courtSvg = `
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520' fill='none' stroke='white' stroke-width='3' stroke-linejoin='round'>
-  <polygon points='60,170 400,40 740,170'/>
-  <polygon points='140,160 400,62 660,160' stroke-width='1.5'/>
-  <circle cx='400' cy='118' r='22' stroke-width='2'/>
-  <rect x='60' y='170' width='680' height='28'/>
-  <rect x='80' y='198' width='640' height='16' stroke-width='2'/>
-  <g>
-    <rect x='110' y='214' width='44' height='230'/><rect x='100' y='214' width='64' height='14'/><rect x='100' y='432' width='64' height='14'/>
-    <rect x='214' y='214' width='44' height='230'/><rect x='204' y='214' width='64' height='14'/><rect x='204' y='432' width='64' height='14'/>
-    <rect x='318' y='214' width='44' height='230'/><rect x='308' y='214' width='64' height='14'/><rect x='308' y='432' width='64' height='14'/>
-    <rect x='438' y='214' width='44' height='230'/><rect x='428' y='214' width='64' height='14'/><rect x='428' y='432' width='64' height='14'/>
-    <rect x='542' y='214' width='44' height='230'/><rect x='532' y='214' width='64' height='14'/><rect x='532' y='432' width='64' height='14'/>
-    <rect x='646' y='214' width='44' height='230'/><rect x='636' y='214' width='64' height='14'/><rect x='636' y='432' width='64' height='14'/>
-  </g>
-  <rect x='80' y='446' width='640' height='18'/>
-  <rect x='60' y='464' width='680' height='18'/>
-  <rect x='40' y='482' width='720' height='18'/>
+/* ------------------------------------------------------------------
+   Transparent legal backdrop (courthouse pillars).
+   Drawn as inline SVG so no extra image file is needed.
+   To use a real photo instead, set:
+   const BACKDROP = "url('/images/courthouse.jpg')";
+   (put the file in /public/images/) and tune BACKDROP_OPACITY below.
+------------------------------------------------------------------- */
+const pillars = [190, 320, 450, 580, 710, 840, 966]
+  .map(
+    (x) =>
+      `<rect x="${x}" y="246" width="44" height="300"/><rect x="${x - 12}" y="546" width="68" height="18"/><rect x="${x - 12}" y="228" width="68" height="18"/>`
+  )
+  .join('');
+
+const courthouseSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" fill="none" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">
+  <polygon points="150,200 600,60 1050,200"/>
+  <polygon points="230,190 600,85 970,190" stroke-width="1.5"/>
+  <circle cx="600" cy="150" r="26"/>
+  <rect x="140" y="200" width="920" height="30"/>
+  ${pillars}
+  <rect x="150" y="564" width="900" height="22"/>
+  <rect x="120" y="586" width="960" height="22"/>
+  <rect x="90" y="608" width="1020" height="24"/>
 </svg>`;
 
-const COURT_BG = `url("data:image/svg+xml;utf8,${encodeURIComponent(courtSvg)}")`;
+const BACKDROP = `url("data:image/svg+xml,${encodeURIComponent(courthouseSvg)}")`;
+const BACKDROP_OPACITY = 0.07; // 0 = invisible, 1 = solid
 
-/* Latin legal maxims: one is shown per day */
-const MAXIMS = [
-  { latin: 'Audi alteram partem', meaning: 'Hear the other side. No one should be condemned unheard.' },
-  { latin: 'Pacta sunt servanda', meaning: 'Agreements must be kept. The foundation of contract law.' },
-  { latin: 'Ubi jus ibi remedium', meaning: 'Where there is a right, there is a remedy.' },
-  { latin: 'Nemo judex in causa sua', meaning: 'No one should be a judge in their own cause.' },
-  { latin: 'Ignorantia juris non excusat', meaning: 'Ignorance of the law is not an excuse.' },
-  { latin: 'Actus non facit reum nisi mens sit rea', meaning: 'An act alone does not make a person guilty without a guilty mind.' },
-  { latin: 'Caveat emptor', meaning: 'Let the buyer beware. Review before you commit.' },
+const practiceAreas = [
+  { icon: 'fa-user-shield', title: 'Personal & Family Law', text: 'Succession, wills, marriage, maintenance and property rights.', tone: 'primary' },
+  { icon: 'fa-briefcase', title: 'Labour & Employment', text: 'Termination, wages, notice periods and workplace disputes.', tone: 'success' },
+  { icon: 'fa-building', title: 'Corporate & Startups', text: 'Incorporation, shareholder terms, liabilities and compliance.', tone: 'warning' },
+  { icon: 'fa-user-lock', title: 'Data Privacy', text: 'Consent, data fiduciary duties and breach obligations.', tone: 'info' },
+  { icon: 'fa-cart-shopping', title: 'Consumer Protection', text: 'Defective goods, deficient services and refund remedies.', tone: 'danger' },
 ];
 
-/* Practice areas (matches the 5 statutory frameworks) */
-const PRACTICE_AREAS = [
-  { icon: 'fa-people-roof', label: 'Personal & Family', note: 'Succession, marriage, property' },
-  { icon: 'fa-helmet-safety', label: 'Labour & Employment', note: 'Contracts, disputes, termination' },
-  { icon: 'fa-building-columns', label: 'Corporate & Startup', note: 'Liability, shareholders, IP' },
-  { icon: 'fa-user-lock', label: 'Data Privacy', note: 'DPDP Act, consent, breach' },
-  { icon: 'fa-cart-shopping', label: 'Consumer Protection', note: 'Rights, refunds, complaints' },
+const workflow = [
+  { icon: 'fa-cloud-arrow-up', title: 'Upload agreement', text: 'Add a PDF or TXT contract to the analyzer.' },
+  { icon: 'fa-magnifying-glass-chart', title: 'Review risk report', text: 'See the risk score, summary and missing clauses.' },
+  { icon: 'fa-scale-balanced', title: 'Check statutes', text: 'Match clauses against the compliance library.' },
+  { icon: 'fa-gavel', title: 'Act with confidence', text: 'Ask the Legal AI or log a complaint to escalate.' },
 ];
 
-/* SAMPLE data: replace with real data from your API later */
-const DEADLINES = [
-  { title: 'Vendor Agreement: review pending', due: 'Due in 2 days', level: 'danger' },
-  { title: 'Employment contract: clause check', due: 'Due in 5 days', level: 'warning' },
-  { title: 'NDA renewal: signature stage', due: 'Due in 9 days', level: 'primary' },
+const keyClauses = [
+  'Governing Law & Jurisdiction',
+  'Indemnification',
+  'Limitation of Liability',
+  'Confidentiality / NDA',
+  'Termination & Notice',
+  'Dispute Resolution & Arbitration',
+  'Force Majeure',
+  'Intellectual Property',
 ];
 
-const RECENT = [
-  { icon: 'fa-file-contract', text: 'Lease Agreement analysed', meta: 'Risk score 72 / 100', color: 'primary' },
-  { icon: 'fa-robot', text: 'Asked: notice period rules', meta: 'Labour Law', color: 'success' },
-  { icon: 'fa-shield-halved', text: 'Indemnity clause template opened', meta: 'Compliance Engine', color: 'warning' },
+const recentActivity = [
+  { icon: 'fa-file-contract', color: 'primary', title: 'Service Agreement reviewed', meta: 'Risk score 72 / 100 · 3 clauses missing' },
+  { icon: 'fa-robot', color: 'success', title: 'Legal Assistant query', meta: 'Notice period under employment contract' },
+  { icon: 'fa-shield-halved', color: 'warning', title: 'Compliance search', meta: 'Indemnification clause templates' },
+  { icon: 'fa-list-check', color: 'danger', title: 'Complaint escalated', meta: 'Consumer dispute · awaiting response' },
+];
+
+const quickQuestions = [
+  'What is a valid notice period for termination?',
+  'Who inherits without a will?',
+  'What must a startup disclose to investors?',
+  'How do I file a consumer complaint?',
 ];
 
 export default function Home() {
   const { user } = useContext(AuthContext);
 
-  const today = useMemo(() => new Date(), []);
-  const dateLabel = today.toLocaleDateString('en-IN', {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const today = new Date().toLocaleDateString('en-IN', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
-  const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
-  const maxim = MAXIMS[dayOfYear % MAXIMS.length];
 
   return (
-    <div className="container-fluid p-4 position-relative" style={{ minHeight: '100%', overflow: 'hidden' }}>
-      {/* Small hover/legal-accent styles (theme colours unchanged) */}
-      <style>{`
-        .lexi-card { transition: transform .2s ease, box-shadow .2s ease; }
-        .lexi-card:hover { transform: translateY(-3px); box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.25) !important; }
-        .lexi-rule { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,193,7,.6), transparent); }
-        .lexi-top-accent { border-top: 3px solid var(--accent, #0d6efd) !important; }
-      `}</style>
-
-      {/* Page watermark: translucent court building behind everything */}
+    <div className="position-relative" style={{ minHeight: '100%', overflow: 'hidden' }}>
+      {/* Transparent legal backdrop */}
       <div
         aria-hidden="true"
         style={{
-          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none',
-          backgroundImage: COURT_BG,
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: BACKDROP,
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center 62%',
-          backgroundSize: 'min(1100px, 95%)',
-          opacity: 0.07,
+          backgroundPosition: 'center bottom',
+          backgroundSize: 'min(1200px, 100%) auto',
+          opacity: BACKDROP_OPACITY,
+          pointerEvents: 'none',
+          zIndex: 0,
         }}
       />
 
-      <div className="position-relative" style={{ zIndex: 1 }}>
-        {/* ---------------- Welcome Hero Banner ---------------- */}
+      <div className="container-fluid p-4 position-relative" style={{ zIndex: 1 }}>
+        {/* Welcome Hero Banner */}
         <div
           className="card border-0 text-white rounded-4 p-4 p-md-5 mb-4 shadow-sm"
           style={{
@@ -106,33 +108,35 @@ export default function Home() {
             overflow: 'hidden',
           }}
         >
-          {/* Hero watermark */}
           <div
             aria-hidden="true"
             style={{
-              position: 'absolute', right: '-40px', bottom: '-30px', width: '520px', height: '340px',
-              backgroundImage: COURT_BG, backgroundRepeat: 'no-repeat', backgroundSize: 'contain',
-              opacity: 0.1, pointerEvents: 'none',
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: BACKDROP,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right -120px bottom -40px',
+              backgroundSize: '760px auto',
+              opacity: 0.06,
+              pointerEvents: 'none',
             }}
           />
           <div className="row align-items-center position-relative">
             <div className="col-lg-8">
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span className="badge bg-primary text-white px-3 py-2 rounded-pill">
-                  <i className="fa-solid fa-sparkles me-2"></i>Legal Intelligence Operating System
-                </span>
-                <span className="badge border border-warning border-opacity-50 text-warning px-3 py-2 rounded-pill">
-                  <i className="fa-solid fa-gavel me-2"></i>{dateLabel}
-                </span>
-              </div>
+              <span className="badge bg-primary text-white px-3 py-2 rounded-pill mb-3">
+                <i className="fa-solid fa-scale-balanced me-2"></i>Legal Intelligence Operating System
+              </span>
               <h1 className="fw-bold display-6 mb-2">
-                Welcome back, Counsel <span className="text-primary">{user?.email?.split('@')[0]}</span>
+                {greeting}, Counsel <span className="text-primary">{user?.email?.split('@')[0]}</span>
               </h1>
-              <div className="lexi-rule my-3" style={{ maxWidth: 420 }}></div>
-              <p className="text-light opacity-75 fs-6 lh-lg mb-4">
-                LexiAI equips your practice with real-time contract vulnerability scoring, multi-category statutory legal advisories, and an interactive compliance repository.
+              <p className="text-light opacity-50 small mb-3">
+                <i className="fa-regular fa-calendar me-2"></i>{today}
               </p>
-              <div className="d-flex flex-wrap gap-3 mb-4">
+              <p className="text-light opacity-75 fs-6 lh-lg mb-4">
+                LexiAI equips your practice with real-time contract vulnerability scoring, multi-category
+                statutory legal advisories, and an interactive compliance repository.
+              </p>
+              <div className="d-flex flex-wrap gap-3">
                 <Link to="/analyzer" className="btn btn-primary px-4 py-2.5 fw-bold shadow-sm">
                   <i className="fa-solid fa-file-contract me-2"></i>Analyze Contract
                 </Link>
@@ -140,24 +144,22 @@ export default function Home() {
                   <i className="fa-solid fa-robot me-2"></i>Ask Legal AI
                 </Link>
               </div>
-              <div className="small text-light opacity-75">
-                <i className="fa-solid fa-quote-left text-warning me-2"></i>
-                <span className="fst-italic fw-semibold text-white">{maxim.latin}</span>
-                <span className="mx-2">|</span>{maxim.meaning}
-              </div>
             </div>
             <div className="col-lg-4 text-center d-none d-lg-block">
               <div className="bg-primary bg-opacity-10 p-4 rounded-circle d-inline-block border border-primary border-opacity-25">
                 <i className="fa-solid fa-scale-balanced text-primary display-1"></i>
               </div>
+              <p className="text-light opacity-50 small fst-italic mt-3 mb-0">
+                “Justice delayed is justice denied.”
+              </p>
             </div>
           </div>
         </div>
 
-        {/* ---------------- Metric Cards Row (kept centred) ---------------- */}
+        {/* Metric Cards Row */}
         <div className="row g-3 mb-4">
           <div className="col-md-4">
-            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#0d6efd' }}>
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Contract Risk Gauge</span>
                 <i className="fa-solid fa-shield-halved text-primary fs-4"></i>
@@ -168,7 +170,7 @@ export default function Home() {
           </div>
 
           <div className="col-md-4">
-            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#198754' }}>
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Statutory Categories</span>
                 <i className="fa-solid fa-layer-group text-success fs-4"></i>
@@ -179,7 +181,7 @@ export default function Home() {
           </div>
 
           <div className="col-md-4">
-            <div className="card lexi-card lexi-top-accent border-0 shadow-sm p-4 bg-white rounded-3 h-100" style={{ '--accent': '#ffc107' }}>
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-2">
                 <span className="text-muted small fw-bold text-uppercase">Active Jurisdiction</span>
                 <i className="fa-solid fa-location-dot text-warning fs-4"></i>
@@ -190,29 +192,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ---------------- Practice Areas ---------------- */}
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <h6 className="text-white fw-bold mb-0 text-uppercase">
-            <i className="fa-solid fa-landmark text-warning me-2"></i>Practice Areas
-          </h6>
-          <div className="lexi-rule flex-grow-1"></div>
-        </div>
-        <div className="row g-3 mb-4">
-          {PRACTICE_AREAS.map((a) => (
-            <div className="col-6 col-lg" key={a.label}>
-              <div className="card lexi-card border-0 shadow-sm bg-white rounded-3 h-100 p-3 text-center">
-                <i className={`fa-solid ${a.icon} text-primary fs-3 mb-2`}></i>
-                <div className="fw-bold text-dark small">{a.label}</div>
-                <div className="text-muted" style={{ fontSize: '0.75rem' }}>{a.note}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ---------------- Direct Module Cards ---------------- */}
+        {/* Direct Module Cards */}
         <div className="row g-4 mb-4">
           <div className="col-md-6 col-xl-3">
-            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
               <div>
                 <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-3 d-inline-block mb-3">
                   <i className="fa-solid fa-file-contract fs-3"></i>
@@ -229,7 +212,7 @@ export default function Home() {
           </div>
 
           <div className="col-md-6 col-xl-3">
-            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
               <div>
                 <div className="bg-success bg-opacity-10 text-success p-3 rounded-3 d-inline-block mb-3">
                   <i className="fa-solid fa-robot fs-3"></i>
@@ -246,7 +229,7 @@ export default function Home() {
           </div>
 
           <div className="col-md-6 col-xl-3">
-            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
               <div>
                 <div className="bg-warning bg-opacity-10 text-warning p-3 rounded-3 d-inline-block mb-3">
                   <i className="fa-solid fa-shield-halved fs-3"></i>
@@ -262,18 +245,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* New: Complaint Tracker (already in your sidebar). Change the route if yours differs */}
           <div className="col-md-6 col-xl-3">
-            <div className="card lexi-card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
+            <div className="card border-0 shadow-sm p-4 bg-white rounded-4 h-100 d-flex flex-column justify-content-between">
               <div>
                 <div className="bg-danger bg-opacity-10 text-danger p-3 rounded-3 d-inline-block mb-3">
                   <i className="fa-solid fa-list-check fs-3"></i>
                 </div>
                 <h5 className="fw-bold text-dark">Complaint Tracker</h5>
                 <p className="text-muted small lh-base">
-                  File complaints, follow case status, and escalate to the right forum with a clear record of every step.
+                  Log disputes, follow each case through its stages, and see when escalation is the next step.
                 </p>
               </div>
+              {/* Change "/tracker" if your route for this page is different */}
               <Link to="/tracker" className="btn btn-outline-danger w-100 fw-bold mt-3">
                 Open Tracker <i className="fa-solid fa-arrow-right ms-2"></i>
               </Link>
@@ -281,58 +264,150 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ---------------- Case Desk: deadlines + recent activity ---------------- */}
+        {/* Practice Areas */}
+        <div className="card border-0 shadow-sm bg-white rounded-4 p-4 mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5 className="fw-bold text-dark mb-0">
+              <i className="fa-solid fa-landmark text-primary me-2"></i>Practice Areas Covered
+            </h5>
+            <Link to="/assistant" className="small fw-bold text-decoration-none">
+              Ask about any area <i className="fa-solid fa-arrow-right ms-1"></i>
+            </Link>
+          </div>
+          <div className="row g-3">
+            {practiceAreas.map((area) => (
+              <div className="col-md-6 col-xl" key={area.title}>
+                <div className="border rounded-3 p-3 h-100">
+                  <div
+                    className={`bg-${area.tone} bg-opacity-10 text-${area.tone} rounded-3 d-inline-flex align-items-center justify-content-center mb-2`}
+                    style={{ width: 42, height: 42 }}
+                  >
+                    <i className={`fa-solid ${area.icon}`}></i>
+                  </div>
+                  <h6 className="fw-bold text-dark mb-1">{area.title}</h6>
+                  <p className="text-muted small mb-0 lh-base">{area.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Workflow + Recent Activity */}
         <div className="row g-4 mb-4">
           <div className="col-lg-7">
             <div className="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold text-dark mb-0">
-                  <i className="fa-solid fa-calendar-check text-primary me-2"></i>Deadlines & Reviews
-                </h6>
-                <span className="badge bg-light text-muted border">Sample data</span>
-              </div>
-              {DEADLINES.map((d) => (
-                <div key={d.title} className="d-flex align-items-center justify-content-between py-2 border-bottom">
-                  <div className="d-flex align-items-center gap-3">
-                    <span className={`bg-${d.level} rounded-circle d-inline-block`} style={{ width: 10, height: 10 }}></span>
-                    <span className="text-dark small fw-semibold">{d.title}</span>
+              <h5 className="fw-bold text-dark mb-3">
+                <i className="fa-solid fa-gavel text-primary me-2"></i>How a Contract Review Works
+              </h5>
+              <div className="row g-3">
+                {workflow.map((step, i) => (
+                  <div className="col-sm-6" key={step.title}>
+                    <div className="d-flex gap-3">
+                      <div
+                        className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold"
+                        style={{ width: 38, height: 38 }}
+                      >
+                        {i + 1}
+                      </div>
+                      <div>
+                        <h6 className="fw-bold text-dark mb-1">
+                          <i className={`fa-solid ${step.icon} text-primary me-2`}></i>{step.title}
+                        </h6>
+                        <p className="text-muted small mb-0 lh-base">{step.text}</p>
+                      </div>
+                    </div>
                   </div>
-                  <span className={`badge bg-${d.level} bg-opacity-10 text-${d.level === 'warning' ? 'dark' : d.level}`}>{d.due}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
           <div className="col-lg-5">
             <div className="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold text-dark mb-0">
-                  <i className="fa-solid fa-clock-rotate-left text-success me-2"></i>Recent Activity
-                </h6>
-                <span className="badge bg-light text-muted border">Sample data</span>
-              </div>
-              {RECENT.map((r) => (
-                <div key={r.text} className="d-flex align-items-center gap-3 py-2 border-bottom">
-                  <div className={`bg-${r.color} bg-opacity-10 text-${r.color} rounded-3 d-flex align-items-center justify-content-center`} style={{ width: 38, height: 38 }}>
-                    <i className={`fa-solid ${r.icon}`}></i>
-                  </div>
-                  <div>
-                    <div className="text-dark small fw-semibold">{r.text}</div>
-                    <div className="text-muted" style={{ fontSize: '0.75rem' }}>{r.meta}</div>
-                  </div>
-                </div>
-              ))}
+              <h5 className="fw-bold text-dark mb-3">
+                <i className="fa-solid fa-clock-rotate-left text-primary me-2"></i>Recent Activity
+              </h5>
+              <ul className="list-unstyled mb-0">
+                {recentActivity.map((item, i) => (
+                  <li
+                    key={item.title}
+                    className={`d-flex align-items-start gap-3 py-2 ${i < recentActivity.length - 1 ? 'border-bottom' : ''}`}
+                  >
+                    <div
+                      className={`bg-${item.color} bg-opacity-10 text-${item.color} rounded-3 d-flex align-items-center justify-content-center flex-shrink-0`}
+                      style={{ width: 36, height: 36 }}
+                    >
+                      <i className={`fa-solid ${item.icon}`}></i>
+                    </div>
+                    <div>
+                      <div className="fw-bold text-dark small">{item.title}</div>
+                      <div className="text-muted small">{item.meta}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
 
-        {/* ---------------- Legal disclaimer footer ---------------- */}
-        <div className="lexi-rule mb-3"></div>
-        <p className="text-center text-light opacity-50 small mb-0">
-          <i className="fa-solid fa-scale-balanced me-2"></i>
-          LexiAI provides AI-assisted legal information and is not a substitute for advice from a qualified advocate.
-          All analyses should be verified before reliance.
-        </p>
+        {/* Clause checklist + Quick questions */}
+        <div className="row g-4 mb-4">
+          <div className="col-lg-7">
+            <div className="card border-0 shadow-sm bg-white rounded-4 p-4 h-100">
+              <h5 className="fw-bold text-dark mb-1">
+                <i className="fa-solid fa-list-check text-primary me-2"></i>Clauses Every Contract Should Address
+              </h5>
+              <p className="text-muted small mb-3">The analyzer checks for these and flags what is missing.</p>
+              <div className="row g-2">
+                {keyClauses.map((clause) => (
+                  <div className="col-sm-6" key={clause}>
+                    <div className="d-flex align-items-center small text-dark">
+                      <i className="fa-solid fa-check-circle text-success me-2"></i>{clause}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <Link to="/compliance" className="btn btn-outline-primary fw-bold mt-4">
+                  Browse clause library <i className="fa-solid fa-arrow-right ms-2"></i>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-lg-5">
+            <div
+              className="card border-0 text-white rounded-4 p-4 h-100 shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}
+            >
+              <h5 className="fw-bold mb-3">
+                <i className="fa-solid fa-comments text-primary me-2"></i>Quick Legal Questions
+              </h5>
+              <div className="d-flex flex-column gap-2">
+                {quickQuestions.map((q) => (
+                  <Link
+                    key={q}
+                    to="/assistant"
+                    state={{ prompt: q }}
+                    className="btn btn-outline-light text-start small"
+                  >
+                    <i className="fa-solid fa-quote-left me-2 opacity-50"></i>{q}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="card border-0 rounded-4 p-3 mb-2" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <p className="small text-light opacity-75 mb-0 lh-base">
+            <i className="fa-solid fa-circle-info me-2"></i>
+            LexiAI provides legal information and AI-assisted analysis for research and drafting support.
+            It is not a substitute for advice from a qualified advocate. Verify every statutory reference
+            before relying on it in a filing or agreement.
+          </p>
+        </div>
       </div>
     </div>
   );
